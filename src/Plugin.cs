@@ -48,9 +48,7 @@ sealed class Plugin : BaseUnityPlugin
     {
         orig(self);
 
-        Options oi = new();
-        MachineConnector.SetRegisteredOI("no-damage-rng", oi);
-        MachineConnector.ReloadConfig(oi);
+        MachineConnector.SetRegisteredOI("no-damage-rng", new Options());
     }
 
     private void PlayerGraphics_Update(On.PlayerGraphics.orig_Update orig, PlayerGraphics self)
