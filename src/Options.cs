@@ -8,12 +8,15 @@ sealed class Options : OptionInterface
     public static Configurable<float> DamageMultiplier;
     public static Configurable<int> RecoveryCooldown;
 
+    public Options()
+    {
+        DamageMultiplier = config.Bind("cfgBiteDamageMul", 1f, new ConfigAcceptableRange<float>(0, 5));
+        RecoveryCooldown = config.Bind("cfgRecoveryCooldown", -1, new ConfigAcceptableRange<int>(-1, 60));
+    }
+
     public override void Initialize()
     {
         base.Initialize();
-
-        DamageMultiplier = config.Bind("cfgBiteDamageMul", 1f);
-        RecoveryCooldown = config.Bind("cfgRecoveryCooldown", -1);
 
         Tabs = new OpTab[] { new OpTab(this) };
 
@@ -42,22 +45,14 @@ sealed class Options : OptionInterface
 
         var top = 200;
         var labelDmgMul = new OpLabel(new(20, 600 - top), Vector2.zero, "Damage multiplier", FLabelAlignment.Left);
-        var draggerDmgMul = new OpFloatSlider(DamageMultiplier, new Vector2(300, 600 - top), 200, 3) {
+        var draggerDmgMul = new OpFloatSlider(DamageMultiplier, new Vector2(180, 600 - top - 6), 320, decimalNum: 1) {
             description = "Increases or decreases how much damage you take from RNG-based attacks.",
-            min = 0f,
-            max = 5f,
-            colorEdge = Color.gray,
-            colorFill = Color.white,
         };
 
-        var labelDmgRegen = new OpLabel(new(20, 600 - top - 30), Vector2.zero, "Recovery cooldown", FLabelAlignment.Left);
-        var labelSeconds = new OpLabel(new(506, 600 - top - 30 + 2), Vector2.zero, "seconds", FLabelAlignment.Left);
-        var draggerDmgRegen = new OpSlider(RecoveryCooldown, new Vector2(300, 600 - top - 30), 200) {
-            description = "After this delay, you begin recovering from damage, which takes 5 seconds. If set to -1, damage is only reset after sleeping.",
-            min = -1,
-            max = 60,
-            colorEdge = Color.gray,
-            colorFill = Color.white,
+        var labelDmgRegen = new OpLabel(new(20, 600 - top - 40), Vector2.zero, "Recovery cooldown", FLabelAlignment.Left);
+        var labelSeconds = new OpLabel(new(516, 600 - top - 40), Vector2.zero, "seconds", FLabelAlignment.Left);
+        var draggerDmgRegen = new OpSlider(RecoveryCooldown, new Vector2(180, 600 - top - 46), 320) {
+            description = "After this delay, you rapidly recover from damage. If set to -1, damage is only reset after sleeping.",
         };
 
         Tabs[0].AddItems(
@@ -73,6 +68,6 @@ sealed class Options : OptionInterface
             labelDmgRegen,
             labelSeconds,
             draggerDmgRegen
-            );
+        );
     }
 }

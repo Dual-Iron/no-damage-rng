@@ -22,12 +22,22 @@ sealed class Plugin : BaseUnityPlugin
 
     private BiteDamage Damage(Player p) => playerData.GetValue(p, _ => new());
 
+    private void Hurt(Player p, float damage)
+    {
+        Damage(p).Damage += Options.DamageMultiplier.Value * damage;
+        Damage(p).RecoveryCooldown = Options.RecoveryCooldown.Value * 40;
+    }
+
     public void OnEnable()
     {
         // Add config
         On.RainWorld.OnModsInit += RainWorld_OnModsInit;
 
+        // Show injury
+        On.PlayerGraphics.Update += PlayerGraphics_Update;
+
         // Prevent instant deaths
+        On.Lizard.Bite += Lizard_Bite;
         On.Creature.Violence += Creature_Violence;
 
         // Damage reset cooldown
@@ -38,7 +48,48 @@ sealed class Plugin : BaseUnityPlugin
     {
         orig(self);
 
-        MachineConnector.SetRegisteredOI("no-damage-rng", new Options());
+        Options oi = new();
+        MachineConnector.SetRegisteredOI("no-damage-rng", oi);
+        MachineConnector.ReloadConfig(oi);
+    }
+
+    private void PlayerGraphics_Update(On.PlayerGraphics.orig_Update orig, PlayerGraphics self)
+    {
+        float lastBreath = self.breath;
+
+        orig(self);
+
+        if (Damage(self.player).Damage >= 0.5f) {
+            // Breath faster, close eyes, and twitch a lot while injured
+            self.breath += (self.breath - lastBreath) * 0.5f;
+            self.blink = 5;
+
+            if (UnityEngine.Random.value < 1 / 60f) {
+                int part = UnityEngine.Random.value < 0.5f ? 0 : 1;
+                Vector2 nudge = RWCustom.Custom.RNV() * (2 + 4 * UnityEngine.Random.value);
+                self.NudgeDrawPosition(part, nudge);
+            }
+        }
+    }
+
+    private void Lizard_Bite(On.Lizard.orig_Bite orig, Lizard liz, BodyChunk chunk)
+    {
+        if (chunk.owner is not Player p || liz.AI.friendTracker?.friend == p || liz.lizardParams.biteDamageChance <= 0) {
+            orig(liz, chunk);
+            return;
+        }
+
+        float damageChance = liz.lizardParams.biteDamageChance;
+
+        Hurt(p, damageChance * p.DeathByBiteMultiplier());
+
+        try {
+            liz.lizardParams.biteDamageChance = Damage(p).Damage >= 1 ? 1 : 0;
+            orig(liz, chunk);
+        }
+        finally {
+            liz.lizardParams.biteDamageChance = damageChance;
+        }
     }
 
     private void Creature_Violence(On.Creature.orig_Violence orig, Creature self, BodyChunk source, Vector2? m, BodyChunk chunk, PhysicalObject.Appendage.Pos _, Creature.DamageType type, float damage, float stun)
@@ -46,11 +97,7 @@ sealed class Plugin : BaseUnityPlugin
         if (self is Player p && source?.owner is Creature crit) {
             float killChance = 0;
 
-            if (crit is Lizard liz && liz.AI.friendTracker?.friend != p && liz.lizardParams.biteDamageChance > 0) {
-                killChance = liz.lizardParams.biteDamageChance * p.DeathByBiteMultiplier();
-                damage = 0;
-            }
-            else if (crit is BigSpider spider && !spider.spitter) {
+            if (crit is BigSpider spider && !spider.spitter) {
                 killChance = 0.5f;
                 damage = 0.4f;
             }
@@ -63,14 +110,12 @@ sealed class Plugin : BaseUnityPlugin
                 damage = 0.5f;
             }
 
-            Damage(p).Damage += killChance * Options.DamageMultiplier.Value;
-            Damage(p).RecoveryCooldown = Options.RecoveryCooldown.Value;
+            if (killChance > 0) {
+                Hurt(p, killChance);
 
-            if (Damage(p).Damage >= 1) {
-                damage = Mathf.Max(damage, 1.5f);
-            }
-            else if (damage == 0) {
-                return;
+                if (damage < 1.5f && Damage(p).Damage >= 1) {
+                    damage = 1.5f;
+                }
             }
         }
 
@@ -81,18 +126,20 @@ sealed class Plugin : BaseUnityPlugin
     {
         orig(p, eu);
 
+        if (p.grabbedBy?.Count != 0 || Options.RecoveryCooldown.Value < 0) {
+            return;
+        }
+
         BiteDamage dmg = Damage(p);
 
-        if (p.grabbedBy?.Count == 0 && Options.RecoveryCooldown.Value != -1) {
-            dmg.RecoveryCooldown -= 1;
+        dmg.RecoveryCooldown -= 1;
 
-            if (dmg.RecoveryCooldown < 0) {
-                // Decrease to 0 over 5 seconds
-                dmg.Damage -= 1f / 40f / 5f;
-            }
-            if (dmg.Damage < 0) {
-                dmg.Damage = 0;
-            }
+        if (dmg.RecoveryCooldown < 0) {
+            // Decrease to 0 over 5 seconds
+            dmg.Damage -= 1f / 40f / 5f;
+        }
+        if (dmg.Damage < 0) {
+            dmg.Damage = 0;
         }
     }
 }
