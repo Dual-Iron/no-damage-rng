@@ -11,7 +11,7 @@ sealed class Options : OptionInterface
     public Options()
     {
         DamageMultiplier = config.Bind("cfgBiteDamageMul", 1f, new ConfigAcceptableRange<float>(0, 5));
-        RecoveryCooldown = config.Bind("cfgRecoveryCooldown", -1, new ConfigAcceptableRange<int>(-1, 60));
+        RecoveryCooldown = config.Bind("cfgRecoveryCooldown", 10, new ConfigAcceptableRange<int>(-1, 60));
     }
 
     public override void Initialize()
