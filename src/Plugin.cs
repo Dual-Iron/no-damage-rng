@@ -58,7 +58,7 @@ sealed class Plugin : BaseUnityPlugin
         orig(self);
 
         if (Damage(self.player).Damage >= 0.5f) {
-            // Breath faster, close eyes, and twitch a lot while injured
+            // Breathe faster, close eyes, and twitch a lot while injured
             self.breath += (self.breath - lastBreath) * 0.5f;
             self.blink = 5;
 
