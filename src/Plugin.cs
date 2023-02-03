@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace NoDamageRng;
 
-[BepInPlugin("com.dual.no-damage-rng", "No Damage RNG", "1.0.0")]
+[BepInPlugin("com.dual.no-damage-rng", "No Damage RNG", "1.1.0")]
 sealed class Plugin : BaseUnityPlugin
 {
     private sealed class BiteDamage
@@ -24,8 +24,12 @@ sealed class Plugin : BaseUnityPlugin
 
     private void Hurt(Player p, float damage)
     {
-        Damage(p).Damage += Options.DamageMultiplier.Value * damage;
+        float dmg = Options.DamageMultiplier.Value * damage;
+
+        Damage(p).Damage += dmg;
         Damage(p).RecoveryCooldown = Options.RecoveryCooldown.Value * 40;
+
+        Logger.LogDebug($"Player {p.playerState.playerNumber} received {dmg:0.00} damage");
     }
 
     public void OnEnable()

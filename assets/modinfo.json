@@ -1,7 +1,7 @@
 ﻿{
   "id": "no-damage-rng",
   "name": "No Damage RNG",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "authors": "Dual",
   "description": "Removes the randomness from lethal attacks.<LINE><LINE>Highly configurable. Affects lizards, spiders, dropwigs, and more.",
   "requirements": [],
