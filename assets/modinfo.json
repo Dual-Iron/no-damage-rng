@@ -6,5 +6,6 @@
   "description": "Removes the randomness from lethal attacks.<LINE><LINE>Highly configurable. Affects lizards, spiders, dropwigs, and more.",
   "requirements": [],
   "requirements_names": [],
+  "tags": [ "Creatures", "Game Mechanics" ],
   "checksum_override_version": false
 }
